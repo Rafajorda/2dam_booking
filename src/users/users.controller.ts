@@ -11,7 +11,7 @@ export class UsersController {
  
   @Get('users')
    async getUsers(): Promise<User[]> {
-    console.log('GET /users/users requested');
+
     const result = await this.userService.getUsers();
     if (Array.isArray(result)) {
       return result;

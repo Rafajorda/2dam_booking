@@ -10,17 +10,19 @@ import { Favorites } from '../favorites/favorites.entity';
 
 @Entity()
 export class Product {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
     @Column()
     name: string;
-    @Column({ unique: true })
-    slug: string;
     @Column()
     description: string
     @Column()//color es provisional, puede que cambie
     color: string;
+     @Column('decimal', { precision: 10, scale: 2 })
+    price: number; // 👈 precio del mueble
+    @Column({ nullable: true })
+    dimensions: string;
     @Column({ default: 0 })
     favoritesCount: number
     @Column({ default: 'active' })
@@ -40,17 +42,3 @@ export class Product {
 
 }
 
-// model Product {
-//   id             Int             @id @default(autoincrement())
-//   name           String
-//   slug           String          @unique
-//   file           String
-//   fileSize       Int
-//   description    String
-//   triangles      Int
-//   userId         Int
-//   cartId         Int?
-//   favoritesCount Int             @default(0)
-//   status         status          @default(ACTIVE)
-//   createdAt      DateTime        @default(now())
-//   updatedAt      DateTime        @updatedAt
