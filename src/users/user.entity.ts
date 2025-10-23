@@ -15,7 +15,7 @@ export enum UserRole {
 @Entity()
 export class User {
   constructor() {
-    console.log('User entity loaded');
+   
   }
   @PrimaryGeneratedColumn()
   id: number;

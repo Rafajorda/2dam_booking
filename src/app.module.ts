@@ -14,6 +14,14 @@ import { Order } from './order/order.entity';
 import { User } from './users/user.entity';
 import { OrderLine } from './orderline/orderline.entity';
 import { ImagesProduct } from './images/images.entity';
+import { CartModule } from './cart/cart.module';
+import { FavoritesController } from './favorites/favorites.controller';
+import { FavoritesModule } from './favorites/favorites.module';
+import { ImagesService } from './images/images.service';
+import { ImagesModule } from './images/images.module';
+import { OrderlineController } from './orderline/orderline.controller';
+import { OrderlineService } from './orderline/orderline.service';
+import { OrderlineModule } from './orderline/orderline.module';
 
 @Module({
   imports: [
@@ -33,6 +41,10 @@ import { ImagesProduct } from './images/images.entity';
       synchronize: true,
       autoLoadEntities: true,
     }),
+    CartModule,
+    FavoritesModule,
+    ImagesModule,
+    OrderlineModule,
     // TypeOrmModule.forRoot({
     //   type: 'mariadb',
     //   host: 'database',
@@ -47,7 +59,7 @@ import { ImagesProduct } from './images/images.entity';
     // }),
     
   ],
-  controllers: [AppController, OrderController],
-  providers: [AppService, OrderService],
+  controllers: [AppController, OrderController, FavoritesController, OrderlineController],
+  providers: [AppService, OrderService, ImagesService, OrderlineService],
 })
 export class AppModule {}

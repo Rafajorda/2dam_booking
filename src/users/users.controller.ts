@@ -1,13 +1,27 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { User } from './user.entity';
+import { CreateUserDto } from './user.dto';
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly userService: UsersService) {}
 
  @Get()
-  getHello(): string {
-    return this.userService.getHello();
+ 
+  @Get('users')
+   async getUsers(): Promise<User[]> {
+    console.log('GET /users/users requested');
+    const result = await this.userService.getUsers();
+    if (Array.isArray(result)) {
+      return result;
+    } else {
+      throw new Error('Failed to retrieve users');
+    }
   }
-
+  
+  @Post('user')
+  createUser(@Body() createUserDto: CreateUserDto) {
+    return this.userService.createUser(createUserDto);
+  }
 }
