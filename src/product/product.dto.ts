@@ -26,10 +26,10 @@ export class CreateProductDto {
   @IsOptional()
   dimensions?: string;
   
-//    @IsArray()
-//   @IsUUID('all', { each: true })
-//   @IsOptional()
-//   categoryIds?: string[];
+   @IsArray()
+  @IsUUID('all', { each: true })
+  @IsOptional()
+  categoryIds?: string[];
 }
 
 
