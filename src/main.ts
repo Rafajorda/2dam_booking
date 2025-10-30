@@ -1,29 +1,12 @@
-// import { NestFactory } from '@nestjs/core';
-// import { AppModule } from './app.module';
-
-// async function bootstrap() {
-//   const app = await NestFactory.create(AppModule);
-//   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
-// }
-// bootstrap();
-
 
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, HttpException, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'; 
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // app.useGlobalFilters({
-  //   catch(exception: unknown) {
-  //     if (exception instanceof HttpException) {
-  //       Logger.error('HttpException thrown', exception.getResponse());
-  //     } else {
-  //       Logger.error('Unknown exception thrown', exception);
-  //     }
-  //   },
-  // });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -35,6 +18,17 @@ async function bootstrap() {
     }),
   );
   app.enableCors();
+
+  const config = new DocumentBuilder()
+    .setTitle('Mi API con NestJS')
+    .setDescription('Documentación generada automáticamente con Swagger')
+    .setVersion('1.0')
+    // .addBearerAuth()
+    .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+  
   await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();
