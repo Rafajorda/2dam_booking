@@ -18,6 +18,13 @@ export class ProductService {
         return this.productRepository.find({
             relations: ['categories'],
         });
+    }   
+    async getProductById(id: string): Promise<Product | null> {
+        const product = await this.productRepository.findOne({
+            where: { id },
+            relations: ['categories'],
+        });
+        return product;
     }
 
     async createProduct(createProductDto: CreateProductDto) {
@@ -37,4 +44,5 @@ export class ProductService {
         return product;
 
     }
+  
 }

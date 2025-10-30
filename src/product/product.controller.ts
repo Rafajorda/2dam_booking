@@ -1,5 +1,5 @@
 
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
 import { CreateProductDto } from './product.dto';
@@ -16,6 +16,14 @@ export class ProductController {
       return result;
     } else {
       throw new Error('Failed to retrieve products');
+    }
+  }
+  @Get(':id')
+  async getProductById(@Param('id') id: string): Promise<Product | null> {
+    try {
+        return this.productService.getProductById(id);
+    } catch (error) {
+        throw new Error('Failed to retrieve product by ID');
     }
   }
 
