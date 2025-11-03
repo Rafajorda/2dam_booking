@@ -16,11 +16,11 @@ export class Product {
     @Column()
     name: string;
     @Column()
-    description: string
-    @Column()//color es provisional, puede que cambie
+    description: string;
+    @Column()
     color: string;
      @Column('decimal', { precision: 10, scale: 2 })
-    price: number; // 👈 precio del mueble
+    price: number; 
     @Column({ nullable: true })
     dimensions: string;
     @Column({ default: 0 })

@@ -1,4 +1,56 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Order } from './order.entity';
+import { CreateOrderDto } from './order.dto';
 
 @Injectable()
-export class OrderService {}
+export class OrderService {
+    constructor(
+        @InjectRepository(Order)
+        private orderRepository: Repository<Order>,
+    ) {}
+
+    getOrders(): Promise<Order[]> {
+        return this.orderRepository.find({
+            relations: ['orderLines'],
+        });
+    }
+
+    async getOrderById(id: number): Promise<Order | null> {
+        const order = await this.orderRepository.findOne({
+            where: { id },
+            relations: ['orderLines'],
+        });
+        return order;
+    }
+
+    async createOrder(createOrderDto: CreateOrderDto) {
+        const order = this.orderRepository.create({
+            ...createOrderDto,
+        });
+        await this.orderRepository.save(order);
+        return order;
+    }
+
+    async updateOrder(id: number, updateOrderDto: CreateOrderDto) {
+        const order = await this.orderRepository.findOne({
+            where: { id },
+        });
+
+        if (!order) {
+            throw new Error('Order not found');
+        }
+
+        Object.assign(order, updateOrderDto);
+        await this.orderRepository.save(order);
+        return order;
+    }
+
+    async deleteOrder(id: number): Promise<void> {
+        const result = await this.orderRepository.delete(id);
+        if (result.affected === 0) {
+            throw new Error('Order not found');
+        }
+    }
+}

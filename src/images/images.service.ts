@@ -1,4 +1,81 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ImagesProduct } from './images.entity';
+import { CreateImageDto } from './images.dto';
+import { Product } from '../product/product.entity';
 
 @Injectable()
-export class ImagesService {}
+export class ImagesService {
+    constructor(
+        @InjectRepository(ImagesProduct)
+        private imagesRepository: Repository<ImagesProduct>,
+        @InjectRepository(Product)
+        private productRepository: Repository<Product>,
+    ) {}
+
+    getImages(): Promise<ImagesProduct[]> {
+        return this.imagesRepository.find({
+            relations: ['product'],
+        });
+    }
+
+    async getImageById(id: number): Promise<ImagesProduct | null> {
+        const image = await this.imagesRepository.findOne({
+            where: { id },
+            relations: ['product'],
+        });
+        return image;
+    }
+
+    async createImage(createImageDto: CreateImageDto) {
+        const product = await this.productRepository.findOne({
+            where: { id: createImageDto.productId },
+        });
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        const image = this.imagesRepository.create({
+            src: createImageDto.src,
+            alt: createImageDto.alt,
+            product,
+        });
+
+        await this.imagesRepository.save(image);
+        return image;
+    }
+
+    async updateImage(id: number, updateImageDto: CreateImageDto) {
+        const image = await this.imagesRepository.findOne({
+            where: { id },
+        });
+
+        if (!image) {
+            throw new Error('Image not found');
+        }
+
+        const product = await this.productRepository.findOne({
+            where: { id: updateImageDto.productId },
+        });
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        image.src = updateImageDto.src;
+        image.alt = updateImageDto.alt;
+        image.product = product;
+
+        await this.imagesRepository.save(image);
+        return image;
+    }
+
+    async deleteImage(id: number): Promise<void> {
+        const result = await this.imagesRepository.delete(id);
+        if (result.affected === 0) {
+            throw new Error('Image not found');
+        }
+    }
+}

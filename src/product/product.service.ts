@@ -44,5 +44,37 @@ export class ProductService {
         return product;
 
     }
+
+    async updateProduct(id: string, updateProductDto: CreateProductDto) {
+        const product = await this.productRepository.findOne({
+            where: { id },
+            relations: ['categories'],
+        });
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        const { categoryIds, ...productData } = updateProductDto;
+
+        Object.assign(product, productData);
+
+        if (categoryIds?.length) {
+            const categories = await this.categoryRepository.find({
+                where: { id: In(categoryIds) },
+            });
+            product.categories = categories;
+        }
+
+        await this.productRepository.save(product);
+        return product;
+    }
+
+    async deleteProduct(id: string): Promise<void> {
+        const result = await this.productRepository.delete(id);
+        if (result.affected === 0) {
+            throw new Error('Product not found');
+        }
+    }
   
 }

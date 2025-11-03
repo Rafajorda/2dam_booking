@@ -1,4 +1,94 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { OrderLine } from './orderline.entity';
+import { CreateOrderLineDto } from './orderline.dto';
+import { Order } from '../order/order.entity';
+import { Product } from '../product/product.entity';
 
 @Injectable()
-export class OrderlineService {}
+export class OrderlineService {
+    constructor(
+        @InjectRepository(OrderLine)
+        private orderLineRepository: Repository<OrderLine>,
+        @InjectRepository(Order)
+        private orderRepository: Repository<Order>,
+        @InjectRepository(Product)
+        private productRepository: Repository<Product>,
+    ) {}
+
+    getOrderLines(): Promise<OrderLine[]> {
+        return this.orderLineRepository.find({
+            relations: ['order', 'product'],
+        });
+    }
+
+    async getOrderLineById(id: number): Promise<OrderLine | null> {
+        const orderLine = await this.orderLineRepository.findOne({
+            where: { id },
+            relations: ['order', 'product'],
+        });
+        return orderLine;
+    }
+
+    async createOrderLine(createOrderLineDto: CreateOrderLineDto) {
+        const order = await this.orderRepository.findOne({
+            where: { id: createOrderLineDto.orderId },
+        });
+
+        const product = await this.productRepository.findOne({
+            where: { id: createOrderLineDto.productId },
+        });
+
+        if (!order || !product) {
+            throw new Error('Order or Product not found');
+        }
+
+        const orderLine = this.orderLineRepository.create({
+            quantity: createOrderLineDto.quantity,
+            price: createOrderLineDto.price,
+            order,
+            product,
+        });
+
+        await this.orderLineRepository.save(orderLine);
+        return orderLine;
+    }
+
+    async updateOrderLine(id: number, updateOrderLineDto: CreateOrderLineDto) {
+        const orderLine = await this.orderLineRepository.findOne({
+            where: { id },
+        });
+
+        if (!orderLine) {
+            throw new Error('OrderLine not found');
+        }
+
+        const order = await this.orderRepository.findOne({
+            where: { id: updateOrderLineDto.orderId },
+        });
+
+        const product = await this.productRepository.findOne({
+            where: { id: updateOrderLineDto.productId },
+        });
+
+        if (!order || !product) {
+            throw new Error('Order or Product not found');
+        }
+
+        orderLine.quantity = updateOrderLineDto.quantity;
+        orderLine.price = updateOrderLineDto.price;
+        orderLine.order = order;
+        orderLine.product = product;
+
+        await this.orderLineRepository.save(orderLine);
+        return orderLine;
+    }
+
+    async deleteOrderLine(id: number): Promise<void> {
+        const result = await this.orderLineRepository.delete(id);
+        if (result.affected === 0) {
+            throw new Error('OrderLine not found');
+        }
+    }
+}
