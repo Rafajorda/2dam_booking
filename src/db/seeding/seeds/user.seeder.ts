@@ -10,22 +10,30 @@ export class UserSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<any> {
     const userRepository = dataSource.getRepository(User);
 
-    const userEntries = await Promise.all(
-      userData.map(async (item) => {
-        const user = new User();
-        user.firstName = item.firstName;
-        user.lastName = item.lastName;
-        user.username = item.username;
-        user.email = item.email;
-        user.role = item.role;
-        user.address = item.address;
-        user.password = await bcrypt.hash(item.password, 10);
+    console.log('🌱 Seeding users...');
 
-        return user;
-      }),
-    );
+    for (const item of userData) {
+      const existingUser = await userRepository.findOne({
+        where: { email: item.email },
+      });
 
-    await userRepository.save(userEntries);
+      if (!existingUser) {
+        const user = userRepository.create({
+          firstName: item.firstName,
+          lastName: item.lastName,
+          username: item.username,
+          email: item.email,
+          role: item.role,
+          address: item.address,
+          password: await bcrypt.hash(item.password, 10),
+        });
+
+        await userRepository.save(user);
+        console.log(`✅ User created: ${user.username} (${user.email})`);
+      } else {
+        console.log(`⏭️  User already exists: ${item.email}`);
+      }
+    }
 
     console.log('✅ Users seeding completed!');
   }

@@ -3,6 +3,7 @@ import { Cart } from '../cart/cart.entity';
 import { Favorites } from '../favorites/favorites.entity';
 import { Order } from '../order/order.entity';
 import { OrderLine } from '../orderline/orderline.entity';
+import { RefreshToken } from '../auth/refresh-token.entity';
 import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, OneToMany, OneToOne } from 'typeorm';
 
 
@@ -20,11 +21,11 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  firstName: string;
+  @Column({ type: 'varchar', nullable: true })
+  firstName?: string;
 
-  @Column()
-  lastName: string;
+  @Column({ type: 'varchar', nullable: true })
+  lastName?: string;
 
   @Column({ unique: true })
   username: string;
@@ -44,8 +45,8 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
-  @Column()
-  address: string;
+  @Column({ type: 'varchar', nullable: true })
+  address?: string;
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
@@ -57,9 +58,12 @@ export class User {
   favorites: Favorites[];
 
   
-   @ManyToMany(() => Order, order => order.users)
+   @ManyToMany(() => Order, order => order.user)
       @JoinTable( { name: 'user_order', joinColumn: { name: 'user_id', referencedColumnName: 'id' }, inverseJoinColumn: { name: 'order_id', referencedColumnName: 'id' } })
       orders: Order [];
+
+  @OneToMany(() => RefreshToken, refreshToken => refreshToken.user)
+  refreshTokens: RefreshToken[];
 
 
 

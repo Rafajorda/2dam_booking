@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { User, UserRole } from './user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from './user.dto';
+import { CreateUserDto, UpdateUserDto } from './user.dto';
 import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
@@ -16,37 +16,55 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-  async getUserById(id: number): Promise<User | null> {
-    const user = await this.usersRepository.findOne({
-      where: { id },
-    });
-    return user;
-  }
-
-   async createUser(createUserDto: CreateUserDto) {
-    const user = this.usersRepository.create({
-      ...createUserDto, role: UserRole.USER,
-      status: 'active',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    user.password = await bcrypt.hash(await createUserDto.password, 10);
-    this.usersRepository.save(user);
-    return user;
-
-  }
-
-  async updateUser(id: number, updateUserDto: CreateUserDto) {
+  async getUserById(id: number): Promise<User> {
     const user = await this.usersRepository.findOne({
       where: { id },
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
     }
 
-    Object.assign(user, updateUserDto);
+    return user;
+  }
+
+   async createUser(createUserDto: CreateUserDto) {
+    // Hash de la contraseña
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    
+    const user = this.usersRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+      role: createUserDto.role || UserRole.USER,
+      status: 'active',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    await this.usersRepository.save(user);
+    
+    // Retornar sin contraseña
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  }
+
+  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
+    }
+
+    // Actualizar solo los campos que se enviaron
+    if (updateUserDto.firstName !== undefined) user.firstName = updateUserDto.firstName;
+    if (updateUserDto.lastName !== undefined) user.lastName = updateUserDto.lastName;
+    if (updateUserDto.username !== undefined) user.username = updateUserDto.username;
+    if (updateUserDto.email !== undefined) user.email = updateUserDto.email;
+    if (updateUserDto.address !== undefined) user.address = updateUserDto.address;
+    if (updateUserDto.role !== undefined) user.role = updateUserDto.role;
     
     if (updateUserDto.password) {
       user.password = await bcrypt.hash(updateUserDto.password, 10);
@@ -54,13 +72,16 @@ export class UsersService {
 
     user.updatedAt = new Date();
     await this.usersRepository.save(user);
-    return user;
+    
+    // Retornar sin contraseña
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   }
 
   async deleteUser(id: number): Promise<void> {
     const result = await this.usersRepository.delete(id);
     if (result.affected === 0) {
-      throw new Error('User not found');
+      throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
     }
   }
 
