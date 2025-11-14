@@ -6,11 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
 import { CategoryModule } from './category/category.module';
+import { ColorModule } from './color/color.module';
 import { CartModule } from './cart/cart.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ImagesModule } from './images/images.module';
 import { OrderlineModule } from './orderline/orderline.module';
 import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { AuthModule } from './auth/auth.module';
     ProductModule,
     OrderModule,
     CategoryModule,
+    ColorModule,
+    CommonModule,
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: 'localhost',

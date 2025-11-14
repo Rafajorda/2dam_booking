@@ -4,15 +4,20 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { User } from '../users/user.entity';
+import { RefreshToken } from './refresh-token.entity';
+import { CartModule } from '../cart/cart.module';
+import { FavoritesModule } from '../favorites/favorites.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, RefreshToken]),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET || 'tu_secreto_super_seguro_cambialo',
-      signOptions: { expiresIn: '24h' }, // El token expira en 24 horas
+      signOptions: { expiresIn: '15m' }, // Access token 15 minutos
     }),
+    CartModule,
+    FavoritesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
