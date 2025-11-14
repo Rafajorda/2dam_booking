@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe } from '@nestjs/common';
 import { OrderlineService } from './orderline.service';
 import { OrderLine } from './orderline.entity';
 import { CreateOrderLineDto } from './orderline.dto';
@@ -10,21 +10,12 @@ export class OrderlineController {
     @Get()
     async getOrderLines(): Promise<OrderLine[]> {
         console.log('GET /orderline requested');
-        const result = await this.orderLineService.getOrderLines();
-        if (Array.isArray(result)) {
-            return result;
-        } else {
-            throw new Error('Failed to retrieve order lines');
-        }
+        return this.orderLineService.getOrderLines();
     }
 
     @Get(':id')
-    async getOrderLineById(@Param('id') id: string): Promise<OrderLine | null> {
-        try {
-            return this.orderLineService.getOrderLineById(Number(id));
-        } catch (error) {
-            throw new Error('Failed to retrieve order line by ID');
-        }
+    async getOrderLineById(@Param('id', ParseIntPipe) id: number): Promise<OrderLine | null> {
+        return this.orderLineService.getOrderLineById(id);
     }
 
     @Post()
@@ -33,12 +24,12 @@ export class OrderlineController {
     }
 
     @Put(':id')
-    updateOrderLine(@Param('id') id: string, @Body() updateOrderLineDto: CreateOrderLineDto) {
-        return this.orderLineService.updateOrderLine(Number(id), updateOrderLineDto);
+    updateOrderLine(@Param('id', ParseIntPipe) id: number, @Body() updateOrderLineDto: CreateOrderLineDto) {
+        return this.orderLineService.updateOrderLine(id, updateOrderLineDto);
     }
 
     @Delete(':id')
-    async deleteOrderLine(@Param('id') id: string): Promise<void> {
-        return this.orderLineService.deleteOrderLine(Number(id));
+    async deleteOrderLine(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        return this.orderLineService.deleteOrderLine(id);
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe } from '@nestjs/common';
 import { ImagesService } from './images.service';
 import { ImagesProduct } from './images.entity';
 import { CreateImageDto } from './images.dto';
@@ -10,21 +10,12 @@ export class ImagesController {
     @Get()
     async getImages(): Promise<ImagesProduct[]> {
         console.log('GET /images requested');
-        const result = await this.imagesService.getImages();
-        if (Array.isArray(result)) {
-            return result;
-        } else {
-            throw new Error('Failed to retrieve images');
-        }
+        return this.imagesService.getImages();
     }
 
     @Get(':id')
-    async getImageById(@Param('id') id: string): Promise<ImagesProduct | null> {
-        try {
-            return this.imagesService.getImageById(Number(id));
-        } catch (error) {
-            throw new Error('Failed to retrieve image by ID');
-        }
+    async getImageById(@Param('id', ParseIntPipe) id: number): Promise<ImagesProduct | null> {
+        return this.imagesService.getImageById(id);
     }
 
     @Post()
@@ -33,12 +24,12 @@ export class ImagesController {
     }
 
     @Put(':id')
-    updateImage(@Param('id') id: string, @Body() updateImageDto: CreateImageDto) {
-        return this.imagesService.updateImage(Number(id), updateImageDto);
+    updateImage(@Param('id', ParseIntPipe) id: number, @Body() updateImageDto: CreateImageDto) {
+        return this.imagesService.updateImage(id, updateImageDto);
     }
 
     @Delete(':id')
-    async deleteImage(@Param('id') id: string): Promise<void> {
-        return this.imagesService.deleteImage(Number(id));
+    async deleteImage(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        return this.imagesService.deleteImage(id);
     }
 }

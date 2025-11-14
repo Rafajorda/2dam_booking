@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ImagesProduct } from './images.entity';
@@ -20,11 +20,16 @@ export class ImagesService {
         });
     }
 
-    async getImageById(id: number): Promise<ImagesProduct | null> {
+    async getImageById(id: number): Promise<ImagesProduct> {
         const image = await this.imagesRepository.findOne({
             where: { id },
             relations: ['product'],
         });
+
+        if (!image) {
+            throw new NotFoundException(`Imagen con ID "${id}" no encontrada`);
+        }
+
         return image;
     }
 
@@ -34,7 +39,7 @@ export class ImagesService {
         });
 
         if (!product) {
-            throw new Error('Product not found');
+            throw new NotFoundException(`Producto con ID "${createImageDto.productId}" no encontrado`);
         }
 
         const image = this.imagesRepository.create({
@@ -53,7 +58,7 @@ export class ImagesService {
         });
 
         if (!image) {
-            throw new Error('Image not found');
+            throw new NotFoundException(`Imagen con ID "${id}" no encontrada`);
         }
 
         const product = await this.productRepository.findOne({
@@ -61,7 +66,7 @@ export class ImagesService {
         });
 
         if (!product) {
-            throw new Error('Product not found');
+            throw new NotFoundException(`Producto con ID "${updateImageDto.productId}" no encontrado`);
         }
 
         image.src = updateImageDto.src;
@@ -75,7 +80,7 @@ export class ImagesService {
     async deleteImage(id: number): Promise<void> {
         const result = await this.imagesRepository.delete(id);
         if (result.affected === 0) {
-            throw new Error('Image not found');
+            throw new NotFoundException(`Imagen con ID "${id}" no encontrada`);
         }
     }
 }

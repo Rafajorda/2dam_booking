@@ -1,7 +1,8 @@
 
 import { Product } from '../product/product.entity';
 import { User } from '../users/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToOne, JoinTable, JoinColumn } from 'typeorm';
+import { CartProduct } from './cartProduct.entity';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToOne, OneToMany, JoinTable, JoinColumn } from 'typeorm';
 
 
 @Entity()
@@ -9,7 +10,7 @@ export class Cart {
   @PrimaryGeneratedColumn()
   id: number;
 
-    @Column()
+    @Column({ type: 'float', default: 0 })
     total: number;
 
     @Column({ default: 'active' })
@@ -26,7 +27,11 @@ export class Cart {
     @ManyToMany(() => Product, (product) => product.carts)
     @JoinTable()
         products: Product[];
+
+    @OneToMany(() => CartProduct, cartProduct => cartProduct.cart)
+    cartProducts: CartProduct[];
 }
+
 
 // model Cart {
 //   id        Int           @id @default(autoincrement())

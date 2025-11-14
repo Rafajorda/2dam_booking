@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { Favorites } from './favorites.entity';
 import { CreateFavoriteDto } from './favorites.dto';
@@ -10,21 +10,12 @@ export class FavoritesController {
     @Get()
     async getFavorites(): Promise<Favorites[]> {
         console.log('GET /favorites requested');
-        const result = await this.favoritesService.getFavorites();
-        if (Array.isArray(result)) {
-            return result;
-        } else {
-            throw new Error('Failed to retrieve favorites');
-        }
+        return this.favoritesService.getFavorites();
     }
 
     @Get(':id')
-    async getFavoriteById(@Param('id') id: string): Promise<Favorites | null> {
-        try {
-            return this.favoritesService.getFavoriteById(Number(id));
-        } catch (error) {
-            throw new Error('Failed to retrieve favorite by ID');
-        }
+    async getFavoriteById(@Param('id', ParseIntPipe) id: number): Promise<Favorites | null> {
+        return this.favoritesService.getFavoriteById(id);
     }
 
     @Post()
@@ -33,12 +24,12 @@ export class FavoritesController {
     }
 
     @Put(':id')
-    updateFavorite(@Param('id') id: string, @Body() updateFavoriteDto: CreateFavoriteDto) {
-        return this.favoritesService.updateFavorite(Number(id), updateFavoriteDto);
+    updateFavorite(@Param('id', ParseIntPipe) id: number, @Body() updateFavoriteDto: CreateFavoriteDto) {
+        return this.favoritesService.updateFavorite(id, updateFavoriteDto);
     }
 
     @Delete(':id')
-    async deleteFavorite(@Param('id') id: string): Promise<void> {
-        return this.favoritesService.deleteFavorite(Number(id));
+    async deleteFavorite(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        return this.favoritesService.deleteFavorite(id);
     }
 }

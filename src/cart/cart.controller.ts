@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { Cart } from './cart.entity';
 import { CreateCartDto } from './cart.dto';
@@ -10,21 +10,12 @@ export class CartController {
     @Get()
     async getCarts(): Promise<Cart[]> {
         console.log('GET /cart requested');
-        const result = await this.cartService.getCarts();
-        if (Array.isArray(result)) {
-            return result;
-        } else {
-            throw new Error('Failed to retrieve carts');
-        }
+        return this.cartService.getCarts();
     }
 
     @Get(':id')
-    async getCartById(@Param('id') id: string): Promise<Cart | null> {
-        try {
-            return this.cartService.getCartById(Number(id));
-        } catch (error) {
-            throw new Error('Failed to retrieve cart by ID');
-        }
+    async getCartById(@Param('id', ParseIntPipe) id: number): Promise<Cart | null> {
+        return this.cartService.getCartById(id);
     }
 
     @Post()
@@ -33,12 +24,12 @@ export class CartController {
     }
 
     @Put(':id')
-    updateCart(@Param('id') id: string, @Body() updateCartDto: CreateCartDto) {
-        return this.cartService.updateCart(Number(id), updateCartDto);
+    updateCart(@Param('id', ParseIntPipe) id: number, @Body() updateCartDto: CreateCartDto) {
+        return this.cartService.updateCart(id, updateCartDto);
     }
 
     @Delete(':id')
-    async deleteCart(@Param('id') id: string): Promise<void> {
-        return this.cartService.deleteCart(Number(id));
+    async deleteCart(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        return this.cartService.deleteCart(id);
     }
 }

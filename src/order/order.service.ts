@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
@@ -17,11 +17,16 @@ export class OrderService {
         });
     }
 
-    async getOrderById(id: number): Promise<Order | null> {
+    async getOrderById(id: number): Promise<Order> {
         const order = await this.orderRepository.findOne({
             where: { id },
-            relations: ['orderLines'],
+            relations: ['orderLines', 'orderLines.product', 'user'],
         });
+
+        if (!order) {
+            throw new NotFoundException(`Pedido con ID "${id}" no encontrado`);
+        }
+
         return order;
     }
 
@@ -39,7 +44,7 @@ export class OrderService {
         });
 
         if (!order) {
-            throw new Error('Order not found');
+            throw new NotFoundException(`Pedido con ID "${id}" no encontrado`);
         }
 
         Object.assign(order, updateOrderDto);
@@ -50,7 +55,7 @@ export class OrderService {
     async deleteOrder(id: number): Promise<void> {
         const result = await this.orderRepository.delete(id);
         if (result.affected === 0) {
-            throw new Error('Order not found');
+            throw new NotFoundException(`Pedido con ID "${id}" no encontrado`);
         }
     }
 }

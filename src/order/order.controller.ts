@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { Order } from './order.entity';
 import { CreateOrderDto } from './order.dto';
@@ -10,21 +10,12 @@ export class OrderController {
     @Get()
     async getOrders(): Promise<Order[]> {
         console.log('GET /order requested');
-        const result = await this.orderService.getOrders();
-        if (Array.isArray(result)) {
-            return result;
-        } else {
-            throw new Error('Failed to retrieve orders');
-        }
+        return this.orderService.getOrders();
     }
 
     @Get(':id')
-    async getOrderById(@Param('id') id: string): Promise<Order | null> {
-        try {
-            return this.orderService.getOrderById(Number(id));
-        } catch (error) {
-            throw new Error('Failed to retrieve order by ID');
-        }
+    async getOrderById(@Param('id', ParseIntPipe) id: number): Promise<Order | null> {
+        return this.orderService.getOrderById(id);
     }
 
     @Post()
@@ -33,12 +24,12 @@ export class OrderController {
     }
 
     @Put(':id')
-    updateOrder(@Param('id') id: string, @Body() updateOrderDto: CreateOrderDto) {
-        return this.orderService.updateOrder(Number(id), updateOrderDto);
+    updateOrder(@Param('id', ParseIntPipe) id: number, @Body() updateOrderDto: CreateOrderDto) {
+        return this.orderService.updateOrder(id, updateOrderDto);
     }
 
     @Delete(':id')
-    async deleteOrder(@Param('id') id: string): Promise<void> {
-        return this.orderService.deleteOrder(Number(id));
+    async deleteOrder(@Param('id', ParseIntPipe) id: number): Promise<void> {
+        return this.orderService.deleteOrder(id);
     }
 }

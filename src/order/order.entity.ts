@@ -1,27 +1,30 @@
 import { OrderLine } from '../orderline/orderline.entity';
 import { User } from '../users/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 
 
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
   id: number;
-    @Column()
+    @Column({ nullable: true })
     slug: string;
-    @Column()
-    userId: number
     @Column('float')
     total: number
-    @Column({ default: 'active' })
+    @Column({ default: 'pending' })
     status: string;
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    createdAt: Date;
+    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+    updatedAt: Date;
 
-    @ManyToMany(() => User, user => user.orders)
-        users: User[];
+    @ManyToOne(() => User, user => user.orders, { onDelete: 'CASCADE' })
+    user: User;
 
     @OneToMany(() => OrderLine, orderLine => orderLine.order)
-orderLines: OrderLine[];
+    orderLines: OrderLine[];
 }
+
 
 
 // model Order {

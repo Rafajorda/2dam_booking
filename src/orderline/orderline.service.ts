@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderLine } from './orderline.entity';
@@ -23,11 +23,16 @@ export class OrderlineService {
         });
     }
 
-    async getOrderLineById(id: number): Promise<OrderLine | null> {
+    async getOrderLineById(id: number): Promise<OrderLine> {
         const orderLine = await this.orderLineRepository.findOne({
             where: { id },
             relations: ['order', 'product'],
         });
+
+        if (!orderLine) {
+            throw new NotFoundException(`Línea de pedido con ID "${id}" no encontrada`);
+        }
+
         return orderLine;
     }
 
@@ -40,8 +45,12 @@ export class OrderlineService {
             where: { id: createOrderLineDto.productId },
         });
 
-        if (!order || !product) {
-            throw new Error('Order or Product not found');
+        if (!order) {
+            throw new NotFoundException(`Pedido con ID "${createOrderLineDto.orderId}" no encontrado`);
+        }
+
+        if (!product) {
+            throw new NotFoundException(`Producto con ID "${createOrderLineDto.productId}" no encontrado`);
         }
 
         const orderLine = this.orderLineRepository.create({
@@ -61,7 +70,7 @@ export class OrderlineService {
         });
 
         if (!orderLine) {
-            throw new Error('OrderLine not found');
+            throw new NotFoundException(`Línea de pedido con ID "${id}" no encontrada`);
         }
 
         const order = await this.orderRepository.findOne({
@@ -72,8 +81,12 @@ export class OrderlineService {
             where: { id: updateOrderLineDto.productId },
         });
 
-        if (!order || !product) {
-            throw new Error('Order or Product not found');
+        if (!order) {
+            throw new NotFoundException(`Pedido con ID "${updateOrderLineDto.orderId}" no encontrado`);
+        }
+
+        if (!product) {
+            throw new NotFoundException(`Producto con ID "${updateOrderLineDto.productId}" no encontrado`);
         }
 
         orderLine.quantity = updateOrderLineDto.quantity;
@@ -88,7 +101,7 @@ export class OrderlineService {
     async deleteOrderLine(id: number): Promise<void> {
         const result = await this.orderLineRepository.delete(id);
         if (result.affected === 0) {
-            throw new Error('OrderLine not found');
+            throw new NotFoundException(`Línea de pedido con ID "${id}" no encontrada`);
         }
     }
 }
