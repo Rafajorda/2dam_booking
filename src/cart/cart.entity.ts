@@ -33,15 +33,4 @@ export class Cart {
 }
 
 
-// model Cart {
-//   id        Int           @id @default(autoincrement())
-//   userId    Int
-//   total     Float
-//   status    status        @default(ACTIVE)
-//   createdAt DateTime      @default(now())
-//   updatedAt DateTime      @updatedAt
-//   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   cartLines CartProduct[]
-//   products  Product[]
-// }
 
