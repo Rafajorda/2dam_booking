@@ -15,18 +15,26 @@ import {
   BadRequestException,
   Req,
   ParseUUIDPipe,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { Product } from './product.entity';
 import { CreateProductDto, FilterProductDto, ProductResponseDto } from './product.dto';
 import type { Response, Request } from 'express';
+import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '../auth/auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
 @ApiTags('product')
 @Controller('product')
 export class ProductController {
-    constructor(private readonly productService: ProductService) {}
+    constructor(
+      private readonly productService: ProductService,
+      private readonly jwtService: JwtService,
+    ) {}
 
  @Get() 
    @ApiOperation({ summary: 'Obtener productos con filtros' })
@@ -35,16 +43,20 @@ export class ProductController {
    @ApiQuery({ name: 'colorId', required: false, description: 'Filtrar por ID de color' })
    @ApiQuery({ name: 'minPrice', required: false, description: 'Precio mínimo' })
    @ApiQuery({ name: 'maxPrice', required: false, description: 'Precio máximo' })
+   @ApiQuery({ name: 'onlyFavorites', required: false, description: 'Solo productos en favoritos del usuario (requiere autenticación)' })
    @ApiQuery({ name: 'sortBy', required: false, description: 'Ordenar por (name, price, favoritesCount)' })
    @ApiQuery({ name: 'order', required: false, enum: ['ASC', 'DESC'], description: 'Orden ascendente o descendente' })
    @ApiQuery({ name: 'limit', required: false, description: 'Número de resultados' })
    @ApiQuery({ name: 'offset', required: false, description: 'Saltar resultados' })
+   @ApiBearerAuth('JWT-auth')
    async getProducts(
+    @Req() req: Request,
     @Query('search') search?: string,
     @Query('categoryId') categoryId?: string,
     @Query('colorId') colorId?: string,
     @Query('minPrice') minPrice?: string,
     @Query('maxPrice') maxPrice?: string,
+    @Query('onlyFavorites') onlyFavorites?: string,
     @Query('sortBy') sortBy?: string,
     @Query('order') order?: 'ASC' | 'DESC',
     @Query('limit') limit?: string,
@@ -65,6 +77,26 @@ export class ProductController {
     if (offset && isNaN(Number(offset))) {
       throw new BadRequestException('offset debe ser un número válido');
     }
+
+    // Obtener userId del token JWT si está presente
+    let userId: number | undefined;
+    const onlyFavoritesBoolean = onlyFavorites === 'true';
+
+    if (onlyFavoritesBoolean) {
+      const token = this.extractTokenFromHeader(req);
+      if (!token) {
+        throw new UnauthorizedException('Se requiere autenticación para filtrar por favoritos');
+      }
+
+      try {
+        const payload = await this.jwtService.verifyAsync(token, {
+          secret: process.env.JWT_SECRET || 'tu_secreto_super_seguro_cambialo',
+        });
+        userId = payload.sub;
+      } catch {
+        throw new UnauthorizedException('Token inválido o expirado');
+      }
+    }
     
     const filters: FilterProductDto = {
       search,
@@ -72,18 +104,24 @@ export class ProductController {
       colorId,
       minPrice: minPrice ? Number(minPrice) : undefined,
       maxPrice: maxPrice ? Number(maxPrice) : undefined,
+      onlyFavorites: onlyFavoritesBoolean,
       sortBy,
       order,
       limit: limit ? Number(limit) : 10,
       offset: offset ? Number(offset) : 0,
     };
 
-    const result = await this.productService.getProducts(filters);
+    const result = await this.productService.getProducts(filters, userId);
     return result;
   }
 
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
+  }
+
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener producto por ID' })
+  @ApiOperation({ summary: 'Obtener producto por ID (público)' })
   async getProductById(@Param('id', ParseUUIDPipe) id: string): Promise<Product | null> {
     return this.productService.getProductById(id);
   }
@@ -109,7 +147,7 @@ export class ProductController {
    * ModelViewer(src: product.model3DUrl)
    */
   @Get(':id/details')
-  @ApiOperation({ summary: 'Obtener producto con detalles de modelo 3D' })
+  @ApiOperation({ summary: 'Obtener producto con detalles de modelo 3D (público)' })
   async getProductDetails(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: Request,
@@ -125,19 +163,25 @@ export class ProductController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Crear nuevo producto' })
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Crear nuevo producto (solo admin)' })
   createProduct(@Body() createProductDto: CreateProductDto) {
     return this.productService.createProduct(createProductDto);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Actualizar producto' })
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Actualizar producto (solo admin)' })
   updateProduct(@Param('id', ParseUUIDPipe) id: string, @Body() updateProductDto: CreateProductDto) {
     return this.productService.updateProduct(id, updateProductDto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar producto' })
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Eliminar producto (solo admin)' })
   async deleteProduct(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.productService.deleteProduct(id);
   }
@@ -147,7 +191,9 @@ export class ProductController {
    * POST /product/:id/model
    */
   @Post(':id/model')
-  @ApiOperation({ summary: 'Subir modelo 3D para un producto' })
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Subir modelo 3D para un producto (solo admin)' })
   @UseInterceptors(FileInterceptor('file'))
   async uploadModel3D(
     @Param('id', ParseUUIDPipe) id: string,
@@ -174,7 +220,7 @@ export class ProductController {
    * GET /product/:id/model
    */
   @Get(':id/model')
-  @ApiOperation({ summary: 'Descargar modelo 3D de un producto' })
+  @ApiOperation({ summary: 'Descargar modelo 3D de un producto (público)' })
   async getModel3D(
     @Param('id', ParseUUIDPipe) id: string,
     @Res({ passthrough: true }) res: Response,
@@ -194,7 +240,9 @@ export class ProductController {
    * DELETE /product/:id/model
    */
   @Delete(':id/model')
-  @ApiOperation({ summary: 'Eliminar modelo 3D de un producto' })
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Eliminar modelo 3D de un producto (solo admin)' })
   async deleteModel3D(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<{ message: string; product: Product }> {

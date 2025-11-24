@@ -49,11 +49,18 @@ export class ProductService {
     }
     
     
-    async getProducts(filters?: FilterProductDto): Promise<{ data: Product[], total: number }> {
+    async getProducts(filters?: FilterProductDto, userId?: number): Promise<{ data: Product[], total: number }> {
         const queryBuilder = this.productRepository.createQueryBuilder('product')
             .leftJoinAndSelect('product.categories', 'category')
             .leftJoinAndSelect('product.colors', 'color')
             .leftJoinAndSelect('product.images', 'images');
+
+        // Filtro por favoritos del usuario
+        if (filters?.onlyFavorites && userId) {
+            queryBuilder
+                .innerJoin('product.favorites', 'favorite')
+                .andWhere('favorite.user.id = :userId', { userId });
+        }
 
         // Filtro por búsqueda (nombre o descripción)
         if (filters?.search) {

@@ -150,6 +150,14 @@ export class FilterProductDto {
   order?: 'ASC' | 'DESC';
 
   @ApiProperty({
+    example: true,
+    description: 'Filtrar solo productos que están en favoritos del usuario (requiere autenticación)',
+    required: false,
+  })
+  @IsOptional()
+  onlyFavorites?: boolean;
+
+  @ApiProperty({
     example: 10,
     description: 'Número de productos por página (máximo 100)',
     required: false,
