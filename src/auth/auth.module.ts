@@ -7,6 +7,7 @@ import { User } from '../users/user.entity';
 import { RefreshToken } from './refresh-token.entity';
 import { CartModule } from '../cart/cart.module';
 import { FavoritesModule } from '../favorites/favorites.module';
+import { OrderModule } from '../order/order.module';
 
 @Module({
   imports: [
@@ -18,9 +19,10 @@ import { FavoritesModule } from '../favorites/favorites.module';
     }),
     CartModule,
     FavoritesModule,
+    OrderModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

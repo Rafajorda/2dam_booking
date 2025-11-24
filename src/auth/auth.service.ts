@@ -38,11 +38,18 @@ export class AuthService {
     });
     await this.refreshTokenRepository.save(refreshToken);
 
+    // Calcular timestamps de expiración
+    const now = Date.now();
+    const accessTokenExpiresAt = now + (15 * 60 * 1000); // 15 minutos en milliseconds
+    const refreshTokenExpiresAt = expiresAt.getTime();
+
     return {
       access_token,
       refresh_token: refreshTokenString,
       expires_in: 900, // 15 minutos en segundos
       token_type: 'Bearer',
+      access_token_expires_at: accessTokenExpiresAt, // timestamp en ms
+      refresh_token_expires_at: refreshTokenExpiresAt, // timestamp en ms
     };
   }
 async register(registerDto: RegisterDto) {
@@ -72,20 +79,17 @@ async register(registerDto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     console.log('[AuthService] password hashed');
 
-    // Crear el nuevo usuario con campos explícitos
+    // Crear el nuevo usuario (solo campos obligatorios en el registro)
     const newUser = new User();
     newUser.email = registerDto.email;
     newUser.username = registerDto.username;
     newUser.password = hashedPassword;
-    newUser.firstName = registerDto.firstName;
-    newUser.lastName = registerDto.lastName;
-    newUser.address = registerDto.address;
     newUser.role = UserRole.USER;
     newUser.status = 'active';
     newUser.isActive = true;
 
     const savedUser = await this.userRepository.save(newUser);
-    console.log('[AuthService] user saved', { id: savedUser.id, email: savedUser.email, firstName: savedUser.firstName, lastName: savedUser.lastName });
+    console.log('[AuthService] user saved', { id: savedUser.id, email: savedUser.email, username: savedUser.username });
 
     // Generar tokens
     const tokens = await this.generateTokens(savedUser);

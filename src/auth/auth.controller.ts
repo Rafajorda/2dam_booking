@@ -1,9 +1,10 @@
-import { Body, Controller, Post, Get, Put, Delete, UseGuards, Request, Param, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Body, Controller, Post, Get, Put, Delete, UseGuards, Request, Param, ParseUUIDPipe, BadRequestException, ParseIntPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CartService } from '../cart/cart.service';
 import { FavoritesService } from '../favorites/favorites.service';
-import { LoginDto, RegisterDto, UpdateProfileDto, RefreshTokenDto } from './auth.dto';
+import { OrderService } from '../order/order.service';
+import { LoginDto, RegisterDto, UpdateProfileDto, RefreshTokenDto, TokenResponseDto, LoginResponseDto } from './auth.dto';
 import { AuthGuard } from './auth.guard';
 
 @ApiTags('auth')
@@ -13,17 +14,17 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly cartService: CartService,
     private readonly favoritesService: FavoritesService,
+    private readonly orderService: OrderService,
   ) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Registrar un nuevo usuario' })
+  @ApiResponse({ status: 201, description: 'Usuario registrado exitosamente', type: LoginResponseDto })
   async register(@Body() registerDto: RegisterDto) {
     console.log('='.repeat(50));
     console.log('[AuthController] POST /auth/register - RECEIVED');
-    console.log('[AuthController] Body type:', typeof registerDto);
-    console.log('[AuthController] Body constructor:', registerDto?.constructor?.name);
-    console.log('[AuthController] Body:', JSON.stringify(registerDto, null, 2));
-    console.log('[AuthController] Keys:', Object.keys(registerDto || {}));
+    console.log('[AuthController] username:', registerDto.username);
+    console.log('[AuthController] email:', registerDto.email);
     console.log('='.repeat(50));
     
     try {
@@ -32,13 +33,13 @@ export class AuthController {
       return result;
     } catch (error) {
       console.error('[AuthController] register ERROR:', error.message);
-      console.error('[AuthController] error stack:', error.stack);
       throw error;
     }
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Iniciar sesión' })
+  @ApiResponse({ status: 200, description: 'Login exitoso', type: LoginResponseDto })
   async login(@Body() loginDto: LoginDto) {
     console.log('='.repeat(50));
     console.log('[AuthController] POST /auth/login - RECEIVED');
@@ -56,7 +57,11 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @ApiOperation({ summary: 'Refrescar token' })
+  @ApiOperation({ 
+    summary: 'Refrescar token',
+    description: 'Renueva el access token usando el refresh token. El frontend debe llamar este endpoint automáticamente cuando el access_token esté próximo a expirar (ej: 1-2 minutos antes).'
+  })
+  @ApiResponse({ status: 200, description: 'Tokens renovados exitosamente', type: TokenResponseDto })
   async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
     console.log('[AuthController] POST /auth/refresh - Token refresh attempt');
     try {
@@ -152,7 +157,7 @@ export class AuthController {
   @Get('favorites')
   @ApiOperation({ summary: 'Obtener mis favoritos' })
   async getMyFavorites(@Request() req) {
-    return this.favoritesService.getMyFavorites(req.user.sub);
+    return this.favoritesService.getFavoritesByUser(req.user.sub);
   }
 
   @UseGuards(AuthGuard)
@@ -160,7 +165,7 @@ export class AuthController {
   @Post('favorites/:productId')
   @ApiOperation({ summary: 'Agregar producto a favoritos' })
   async addToFavorites(@Request() req, @Param('productId', ParseUUIDPipe) productId: string) {
-    return this.favoritesService.addToFavorites(req.user.sub, productId);
+    return this.favoritesService.createFavorite(req.user.sub, { productId });
   }
 
   @UseGuards(AuthGuard)
@@ -169,5 +174,22 @@ export class AuthController {
   @ApiOperation({ summary: 'Eliminar producto de favoritos' })
   async removeFromFavorites(@Request() req, @Param('productId', ParseUUIDPipe) productId: string) {
     return this.favoritesService.removeFromFavorites(req.user.sub, productId);
+  }
+
+  // ==================== ÓRDENES DEL USUARIO ====================
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @Get('orders')
+  @ApiOperation({ summary: 'Obtener mis órdenes' })
+  async getMyOrders(@Request() req) {
+    return this.orderService.getOrdersByUser(req.user.sub);
+  }
+
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @Get('orders/:id')
+  @ApiOperation({ summary: 'Obtener una orden por ID' })
+  async getMyOrderById(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.orderService.getOrderByIdForUser(id, req.user.sub);
   }
 }

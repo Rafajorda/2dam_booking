@@ -44,30 +44,6 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   username: string;
-
-  @ApiPropertyOptional({
-    example: 'Juan',
-    description: 'Nombre del usuario (opcional)',
-  })
-  @IsString()
-  @IsOptional()
-  firstName?: string;
-
-  @ApiPropertyOptional({
-    example: 'Pérez',
-    description: 'Apellido del usuario (opcional)',
-  })
-  @IsString()
-  @IsOptional()
-  lastName?: string;
-
-  @ApiPropertyOptional({
-    example: 'Calle Falsa 123',
-    description: 'Dirección del usuario (opcional)',
-  })
-  @IsString()
-  @IsOptional()
-  address?: string;
 }
 
 export class RefreshTokenDto {
@@ -129,4 +105,55 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   address?: string;
+}
+
+export class TokenResponseDto {
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'Access token JWT',
+  })
+  access_token: string;
+
+  @ApiProperty({
+    example: 'a1b2c3d4e5f6g7h8i9j0...',
+    description: 'Refresh token',
+  })
+  refresh_token: string;
+
+  @ApiProperty({
+    example: 900,
+    description: 'Tiempo de expiración del access token en segundos (15 minutos)',
+  })
+  expires_in: number;
+
+  @ApiProperty({
+    example: 'Bearer',
+    description: 'Tipo de token',
+  })
+  token_type: string;
+
+  @ApiProperty({
+    example: 1700000000000,
+    description: 'Timestamp (en milisegundos) de expiración del access token',
+  })
+  access_token_expires_at: number;
+
+  @ApiProperty({
+    example: 1700604800000,
+    description: 'Timestamp (en milisegundos) de expiración del refresh token',
+  })
+  refresh_token_expires_at: number;
+}
+
+export class LoginResponseDto extends TokenResponseDto {
+  @ApiProperty({
+    description: 'Datos del usuario autenticado',
+  })
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    role: string;
+    isActive: boolean;
+  };
 }
