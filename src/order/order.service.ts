@@ -17,6 +17,14 @@ export class OrderService {
         });
     }
 
+    async getOrdersByUser(userId: number): Promise<Order[]> {
+        return this.orderRepository.find({
+            where: { user: { id: userId } },
+            relations: ['orderLines', 'orderLines.product', 'orderLines.product.images'],
+            order: { createdAt: 'DESC' },
+        });
+    }
+
     async getOrderById(id: number): Promise<Order> {
         const order = await this.orderRepository.findOne({
             where: { id },
@@ -25,6 +33,19 @@ export class OrderService {
 
         if (!order) {
             throw new NotFoundException(`Pedido con ID "${id}" no encontrado`);
+        }
+
+        return order;
+    }
+
+    async getOrderByIdForUser(id: number, userId: number): Promise<Order> {
+        const order = await this.orderRepository.findOne({
+            where: { id, user: { id: userId } },
+            relations: ['orderLines', 'orderLines.product', 'orderLines.product.images'],
+        });
+
+        if (!order) {
+            throw new NotFoundException(`Pedido con ID "${id}" no encontrado o no te pertenece`);
         }
 
         return order;
