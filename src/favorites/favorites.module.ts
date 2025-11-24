@@ -7,7 +7,9 @@ import { User } from '../users/user.entity';
 import { Product } from '../product/product.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Favorites, User, Product])],
+  imports: [
+    TypeOrmModule.forFeature([Favorites, User, Product]),
+  ],
   providers: [FavoritesService],
   controllers: [FavoritesController],
   exports: [FavoritesService],

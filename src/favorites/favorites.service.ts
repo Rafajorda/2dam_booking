@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Favorites } from './favorites.entity';
@@ -17,92 +17,41 @@ export class FavoritesService {
         private productRepository: Repository<Product>,
     ) {}
 
-    // ==================== ADMIN: CRUD COMPLETO ====================
-    getFavorites(): Promise<Favorites[]> {
+    // ==================== MÉTODOS CON AUTENTICACIÓN ====================
+    
+    /**
+     * Obtener todos los favoritos del usuario autenticado
+     */
+    async getFavoritesByUser(userId: number): Promise<Favorites[]> {
         return this.favoritesRepository.find({
-            relations: ['user', 'product', 'product.images'],
+            where: { user: { id: userId } },
+            relations: ['product', 'product.images', 'product.colors', 'product.categories'],
         });
     }
 
-    async getFavoriteById(id: number): Promise<Favorites | null> {
+    /**
+     * Obtener un favorito por ID (solo si pertenece al usuario)
+     */
+    async getFavoriteById(id: number, userId: number): Promise<Favorites | null> {
         const favorite = await this.favoritesRepository.findOne({
-            where: { id },
-            relations: ['user', 'product', 'product.images'],
-        });
-        return favorite;
-    }
-
-    async createFavorite(createFavoriteDto: CreateFavoriteDto) {
-        const user = await this.userRepository.findOne({
-            where: { id: createFavoriteDto.userId },
-        });
-
-        const product = await this.productRepository.findOne({
-            where: { id: createFavoriteDto.productId },
-        });
-
-        if (!user || !product) {
-            throw new NotFoundException('Usuario o Producto no encontrado');
-        }
-
-        const favorite = this.favoritesRepository.create({
-            user,
-            product,
-        });
-
-        await this.favoritesRepository.save(favorite);
-        return favorite;
-    }
-
-    async updateFavorite(id: number, updateFavoriteDto: CreateFavoriteDto) {
-        const favorite = await this.favoritesRepository.findOne({
-            where: { id },
+            where: { id, user: { id: userId } },
+            relations: ['product', 'product.images', 'product.colors', 'product.categories'],
         });
 
         if (!favorite) {
             throw new NotFoundException('Favorito no encontrado');
         }
 
-        const user = await this.userRepository.findOne({
-            where: { id: updateFavoriteDto.userId },
-        });
-
-        const product = await this.productRepository.findOne({
-            where: { id: updateFavoriteDto.productId },
-        });
-
-        if (!user || !product) {
-            throw new NotFoundException('Usuario o Producto no encontrado');
-        }
-
-        favorite.user = user;
-        favorite.product = product;
-
-        await this.favoritesRepository.save(favorite);
         return favorite;
     }
 
-    async deleteFavorite(id: number): Promise<void> {
-        const result = await this.favoritesRepository.delete(id);
-        if (result.affected === 0) {
-            throw new NotFoundException('Favorito no encontrado');
-        }
-    }
-
-    // ==================== USER: FAVORITOS PROPIOS ====================
-    async getMyFavorites(userId: number) {
-        const favorites = await this.favoritesRepository.find({
-            where: { user: { id: userId } },
-            relations: ['product', 'product.images'],
-        });
-
-        return favorites;
-    }
-
-    async addToFavorites(userId: number, productId: string) {
+    /**
+     * Crear un nuevo favorito para el usuario autenticado
+     */
+    async createFavorite(userId: number, createFavoriteDto: CreateFavoriteDto) {
         // Verificar que el producto existe
         const product = await this.productRepository.findOne({
-            where: { id: productId },
+            where: { id: createFavoriteDto.productId },
         });
 
         if (!product) {
@@ -113,7 +62,7 @@ export class FavoritesService {
         const existingFavorite = await this.favoritesRepository.findOne({
             where: {
                 user: { id: userId },
-                product: { id: productId },
+                product: { id: createFavoriteDto.productId },
             },
         });
 
@@ -121,22 +70,83 @@ export class FavoritesService {
             throw new ConflictException('El producto ya está en favoritos');
         }
 
-        // Añadir a favoritos
+        // Obtener el usuario
         const user = await this.userRepository.findOne({ where: { id: userId } });
         if (!user) {
             throw new NotFoundException('Usuario no encontrado');
         }
         
-        const newFavorite = this.favoritesRepository.create({
+        // Crear el favorito
+        const favorite = this.favoritesRepository.create({
             user,
             product,
         });
 
-        await this.favoritesRepository.save(newFavorite);
-        return newFavorite;
+        await this.favoritesRepository.save(favorite);
+        
+        // Incrementar el contador de favoritos del producto
+        product.favoritesCount = (product.favoritesCount || 0) + 1;
+        await this.productRepository.save(product);
+        
+        // Retornar con relaciones
+        return this.favoritesRepository.findOne({
+            where: { id: favorite.id },
+            relations: ['product', 'product.images', 'product.colors', 'product.categories'],
+        });
     }
 
+    /**
+     * Eliminar un favorito (solo si pertenece al usuario)
+     */
+    async deleteFavorite(id: number, userId: number): Promise<void> {
+        const favorite = await this.favoritesRepository.findOne({
+            where: { id, user: { id: userId } },
+            relations: ['product'],
+        });
+
+        if (!favorite) {
+            throw new NotFoundException('Favorito no encontrado');
+        }
+
+        // Decrementar el contador de favoritos del producto
+        if (favorite.product) {
+            favorite.product.favoritesCount = Math.max(0, (favorite.product.favoritesCount || 0) - 1);
+            await this.productRepository.save(favorite.product);
+        }
+
+        await this.favoritesRepository.remove(favorite);
+    }
+
+    /**
+     * Eliminar un favorito por productId (alternativa más común)
+     */
     async removeFromFavorites(userId: number, productId: string) {
+        const favorite = await this.favoritesRepository.findOne({
+            where: {
+                user: { id: userId },
+                product: { id: productId },
+            },
+            relations: ['product'],
+        });
+
+        if (!favorite) {
+            throw new NotFoundException('Producto no encontrado en favoritos');
+        }
+
+        // Decrementar el contador de favoritos del producto
+        if (favorite.product) {
+            favorite.product.favoritesCount = Math.max(0, (favorite.product.favoritesCount || 0) - 1);
+            await this.productRepository.save(favorite.product);
+        }
+
+        await this.favoritesRepository.remove(favorite);
+        return { message: 'Producto eliminado de favoritos' };
+    }
+
+    /**
+     * Verificar si un producto está en favoritos del usuario
+     */
+    async isFavorite(userId: number, productId: string): Promise<boolean> {
         const favorite = await this.favoritesRepository.findOne({
             where: {
                 user: { id: userId },
@@ -144,11 +154,6 @@ export class FavoritesService {
             },
         });
 
-        if (!favorite) {
-            throw new NotFoundException('Producto no encontrado en favoritos');
-        }
-
-        await this.favoritesRepository.remove(favorite);
-        return { message: 'Producto eliminado de favoritos' };
+        return !!favorite;
     }
 }
