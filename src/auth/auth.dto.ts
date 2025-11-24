@@ -105,6 +105,14 @@ export class UpdateProfileDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://ejemplo.com/avatar.jpg',
+    description: 'URL del avatar del usuario o ruta de la imagen',
+  })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }
 
 export class TokenResponseDto {

@@ -60,6 +60,14 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://ejemplo.com/avatar.jpg',
+    description: 'URL del avatar del usuario o ruta de la imagen (opcional)',
+  })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }
 
 export class UpdateUserDto {
@@ -120,4 +128,12 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   address?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://ejemplo.com/avatar.jpg',
+    description: 'URL del avatar del usuario o ruta de la imagen',
+  })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

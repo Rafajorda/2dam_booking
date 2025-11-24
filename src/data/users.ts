@@ -11,6 +11,7 @@ export default [
     password: 'password123',
     role: UserRole.USER,
     address: 'Calle Falsa 123',
+    avatar: 'https://i.pravatar.cc/150?img=1',
   },
   {
     firstName: 'Lucía',
@@ -20,6 +21,7 @@ export default [
     password: 'lucia123',
     role: UserRole.USER,
     address: 'Avenida Siempreviva 742',
+    avatar: 'https://i.pravatar.cc/150?img=5',
   },
   {
     firstName: 'Admin',
@@ -29,5 +31,6 @@ export default [
     password: 'admin123',
     role: UserRole.ADMIN,
     address: 'Admin Street 1',
+    avatar: 'https://i.pravatar.cc/150?img=10',
   },
 ];

@@ -254,6 +254,7 @@ async register(registerDto: RegisterDto) {
     if (updateProfileDto.username !== undefined) user.username = updateProfileDto.username;
     if (updateProfileDto.email !== undefined) user.email = updateProfileDto.email;
     if (updateProfileDto.address !== undefined) user.address = updateProfileDto.address;
+    if (updateProfileDto.avatar !== undefined) user.avatar = updateProfileDto.avatar;
     user.updatedAt = new Date();
 
     // Si se actualiza la contraseña, hashearla
