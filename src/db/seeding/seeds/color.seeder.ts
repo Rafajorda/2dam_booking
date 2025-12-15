@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import { Color } from '../../../color/color.entity';
-import colorsData from '../../../data/colors';
+import { Color } from '../../../color/color.entity.js';
+import colorsData from '../../../data/colors.js';
 
 export class ColorSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<any> {

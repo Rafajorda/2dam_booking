@@ -40,7 +40,7 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Mi API con NestJS')
+    .setTitle('HomeNest API')
     .setDescription('Documentación generada automáticamente con Swagger')
     .setVersion('1.0')
     .addBearerAuth(
