@@ -2,7 +2,7 @@
 
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import userData from '../../../data/users';
+import { userData } from '../../../data/users';
 import { User } from '../../../users/user.entity';
 import * as bcrypt from 'bcrypt';
 

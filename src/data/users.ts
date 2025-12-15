@@ -2,7 +2,7 @@
 
 import { UserRole } from '../users/user.entity';
 
-export default [
+export const userData = [
   {
     firstName: 'Juan',
     lastName: 'Pérez',

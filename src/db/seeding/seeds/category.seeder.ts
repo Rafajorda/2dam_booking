@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { Category } from '../../../category/category.entity';
-import categoriesData from '../../../data/categories';
+import { categoriesData } from '../../../data/categories';
 
 export class CategorySeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {

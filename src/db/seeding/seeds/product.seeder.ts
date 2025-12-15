@@ -3,7 +3,7 @@ import { Seeder } from 'typeorm-extension';
 import { Product } from '../../../product/product.entity';
 import { Category } from '../../../category/category.entity';
 import { Color } from '../../../color/color.entity';
-import productsData from '../../../data/products';
+import { productsData } from '../../../data/products';
 
 export class ProductSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
