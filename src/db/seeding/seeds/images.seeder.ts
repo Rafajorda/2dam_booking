@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import { ImagesProduct } from '../../../images/images.entity.js';
-import { Product } from '../../../product/product.entity.js';
-import imagesData from '../../../data/images.js';
+import { ImagesProduct } from '../../../images/images.entity';
+import { Product } from '../../../product/product.entity';
+import imagesData from '../../../data/images';
 
 export class ImagesSeeder implements Seeder {
   public async run(dataSource: DataSource): Promise<void> {
