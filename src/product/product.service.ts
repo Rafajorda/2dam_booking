@@ -101,9 +101,9 @@ export class ProductService {
             }
         }
 
-        const statusFilter = filters?.status || 'active';
-        if (statusFilter !== 'all') {
-            queryBuilder.andWhere('product.status = :status', { status: statusFilter });
+        // Filtro por estado - Si no se especifica, mostrar todos
+        if (filters?.status && filters.status !== 'all') {
+            queryBuilder.andWhere('product.status = :status', { status: filters.status });
         }
 
         // Ordenamiento
@@ -236,6 +236,23 @@ export class ProductService {
         if (result.affected === 0) {
             throw new NotFoundException(`Producto con ID "${id}" no encontrado`);
         }
+    }
+
+    async toggleProductStatus(id: string): Promise<Product> {
+        const product = await this.productRepository.findOne({
+            where: { id },
+            relations: ['categories', 'colors', 'images'],
+        });
+
+        if (!product) {
+            throw new NotFoundException(`Producto con ID "${id}" no encontrado`);
+        }
+
+        // Cambiar el estado
+        product.status = product.status === 'active' ? 'inactive' : 'active';
+
+        await this.productRepository.save(product);
+        return product;
     }
 
     /**

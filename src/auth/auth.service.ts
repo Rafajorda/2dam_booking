@@ -19,16 +19,20 @@ export class AuthService {
   ) {}
 
   private async generateTokens(user: User) {
-    // Access token - 15 minutos
+    // Access token - 15 minutos (igual para todos)
     const accessPayload = { sub: user.id, email: user.email, role: user.role };
     const access_token = await this.jwtService.signAsync(accessPayload, {
       expiresIn: '15m',
     });
 
-    // Refresh token - 7 días
+    // Refresh token - duración según rol (se renovará automáticamente al usarse)
     const refreshTokenString = randomBytes(64).toString('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 días
+    
+    // ADMIN: 1 día (más seguro)
+    // USER: 7 días (menos crítico)
+    const refreshTokenDays = user.role === UserRole.ADMIN ? 1 : 7;
+    expiresAt.setDate(expiresAt.getDate() + refreshTokenDays);
 
     // Guardar refresh token en BD
     const refreshToken = this.refreshTokenRepository.create({

@@ -186,6 +186,14 @@ export class ProductController {
     return this.productService.deleteProduct(id);
   }
 
+  @Put(':id/toggle-status')
+  @UseGuards(AuthGuard, AdminGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Cambiar estado de producto (active/inactive) (solo admin)' })
+  async toggleProductStatus(@Param('id', ParseUUIDPipe) id: string): Promise<Product> {
+    return this.productService.toggleProductStatus(id);
+  }
+
   /**
    * Sube o actualiza el modelo 3D de un producto
    * POST /product/:id/model
