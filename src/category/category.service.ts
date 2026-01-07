@@ -58,4 +58,18 @@ export class CategoryService {
             throw new NotFoundException(`Categoría con ID "${id}" no encontrada`);
         }
     }
+
+    async toggleCategoryStatus(id: string): Promise<Category> {
+        const category = await this.categoryRepository.findOne({
+            where: { id },
+        });
+
+        if (!category) {
+            throw new NotFoundException(`Categoría con ID "${id}" no encontrada`);
+        }
+
+        category.status = category.status === 'active' ? 'inactive' : 'active';
+        await this.categoryRepository.save(category);
+        return category;
+    }
 }

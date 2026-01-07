@@ -34,6 +34,14 @@ export class CategoryController {
         return this.categoryService.createCategory(createCategoryDto);
       }
 
+    @Put(':id/toggle-status')
+    @UseGuards(AuthGuard, AdminGuard)
+    @ApiBearerAuth('JWT-auth')
+    @ApiOperation({ summary: 'Cambiar estado active/inactive de categoría (solo admin)' })
+    async toggleCategoryStatus(@Param('id', ParseUUIDPipe) id: string): Promise<Category> {
+        return this.categoryService.toggleCategoryStatus(id);
+    }
+
     @Put(':id')
     @UseGuards(AuthGuard, AdminGuard)
     @ApiBearerAuth('JWT-auth')
