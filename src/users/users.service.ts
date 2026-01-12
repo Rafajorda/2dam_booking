@@ -12,8 +12,21 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  getUsers(): Promise<User[]> {
-    return this.usersRepository.find();
+  async getUsers(page: number = 1, limit: number = 20): Promise<{ data: User[]; total: number; page: number; totalPages: number }> {
+    const skip = (page - 1) * limit;
+    
+    const [users, total] = await this.usersRepository.findAndCount({
+      skip,
+      take: limit,
+      order: { id: 'DESC' },
+    });
+
+    return {
+      data: users,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async getUserById(id: number): Promise<User> {
@@ -83,6 +96,25 @@ export class UsersService {
     if (result.affected === 0) {
       throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
     }
+  }
+
+  async toggleUserStatus(id: number): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID "${id}" no encontrado`);
+    }
+
+    user.status = user.status === 'active' ? 'inactive' : 'active';
+    user.isActive = user.status === 'active';
+    user.updatedAt = new Date();
+    await this.usersRepository.save(user);
+    
+    // Retornar sin contraseña
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
   }
 
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, BadRequestException, ParseIntPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, UseGuards, BadRequestException, ParseIntPipe, Query, DefaultValuePipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
@@ -14,9 +14,12 @@ export class UsersController {
     constructor(private readonly userService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Obtener todos los usuarios (Solo Admin)' })
-  async getUsers(): Promise<User[]> {
-    return this.userService.getUsers();
+  @ApiOperation({ summary: 'Obtener todos los usuarios con paginación (Solo Admin)' })
+  async getUsers(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<{ data: User[]; total: number; page: number; totalPages: number }> {
+    return this.userService.getUsers(page, limit);
   }
 
   @Get(':id')
@@ -29,6 +32,12 @@ export class UsersController {
   @ApiOperation({ summary: 'Crear nuevo usuario (Solo Admin)' })
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.userService.createUser(createUserDto);
+  }
+
+  @Put(':id/toggle-status')
+  @ApiOperation({ summary: 'Cambiar estado active/inactive de usuario (Solo Admin)' })
+  async toggleUserStatus(@Param('id', ParseIntPipe) id: number): Promise<User> {
+    return this.userService.toggleUserStatus(id);
   }
 
   @Put(':id')
