@@ -1,13 +1,21 @@
 
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { Logger, HttpException, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const logger = new Logger('Bootstrap');
+
+  // Configurar carpeta de archivos estáticos para uploads
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
+  });
+  logger.log('📁 Sirviendo archivos estáticos desde /uploads');
 
   // Filtro global de excepciones
   app.useGlobalFilters(new AllExceptionsFilter());
