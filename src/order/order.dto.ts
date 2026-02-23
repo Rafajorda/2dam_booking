@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrderDto {
@@ -25,4 +25,24 @@ export class CreateOrderDto {
   @IsNumber()
   @IsNotEmpty()
   total: number;
+}
+
+export class UpdateOrderDto {
+  @ApiProperty({
+    example: 'completed',
+    description: 'Estado de la orden (pending, processing, shipped, completed, cancelled)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @ApiProperty({
+    example: 150.50,
+    description: 'Total de la orden',
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  total?: number;
 }
