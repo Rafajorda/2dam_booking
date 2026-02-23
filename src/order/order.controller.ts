@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe, UseGuard
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { Order } from './order.entity';
-import { CreateOrderDto } from './order.dto';
+import { CreateOrderDto, UpdateOrderDto } from './order.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 
@@ -40,7 +40,7 @@ export class OrderController {
     @UseGuards(AuthGuard, AdminGuard)
     @ApiBearerAuth('JWT-auth')
     @ApiOperation({ summary: 'Actualizar orden (solo admin)' })
-    updateOrder(@Param('id', ParseIntPipe) id: number, @Body() updateOrderDto: CreateOrderDto) {
+    updateOrder(@Param('id', ParseIntPipe) id: number, @Body() updateOrderDto: UpdateOrderDto) {
         return this.orderService.updateOrder(id, updateOrderDto);
     }
 

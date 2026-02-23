@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
-import { CreateOrderDto } from './order.dto';
+import { CreateOrderDto, UpdateOrderDto } from './order.dto';
 
 @Injectable()
 export class OrderService {
@@ -59,7 +59,7 @@ export class OrderService {
         return order;
     }
 
-    async updateOrder(id: number, updateOrderDto: CreateOrderDto) {
+    async updateOrder(id: number, updateOrderDto: UpdateOrderDto) {
         const order = await this.orderRepository.findOne({
             where: { id },
         });
