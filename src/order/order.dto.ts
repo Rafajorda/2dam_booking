@@ -4,11 +4,12 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateOrderDto {
   @ApiProperty({
     example: 'order-123',
-    description: 'Slug único de la orden',
+    description: 'Slug único de la orden (se genera automáticamente si no se proporciona)',
+    required: false,
   })
   @IsString()
-  @IsNotEmpty()
-  slug: string;
+  @IsOptional()
+  slug?: string;
 
   @ApiProperty({
     example: 1,

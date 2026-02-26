@@ -51,9 +51,23 @@ export class OrderService {
         return order;
     }
 
+    /**
+     * Genera un slug único para una orden
+     * Formato: order-{timestamp}-{random}
+     */
+    private generateSlug(): string {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `order-${timestamp}-${random}`;
+    }
+
     async createOrder(createOrderDto: CreateOrderDto) {
+        // Generar slug automáticamente SIEMPRE
+        const slug = this.generateSlug();
+        
         const order = this.orderRepository.create({
             ...createOrderDto,
+            slug,
         });
         await this.orderRepository.save(order);
         return order;
