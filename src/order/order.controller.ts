@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Delete, Param, ParseIntPipe, UseGuards, ForbiddenException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { Order } from './order.entity';
 import { CreateOrderDto, UpdateOrderDto } from './order.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @ApiTags('order')
 @Controller('order')
@@ -20,12 +21,31 @@ export class OrderController {
         return this.orderService.getOrders();
     }
 
-    @Get(':id')
-    @UseGuards(AuthGuard, AdminGuard)
+    @Get('user')
+    @UseGuards(AuthGuard)
     @ApiBearerAuth('JWT-auth')
-    @ApiOperation({ summary: 'Obtener orden por ID (solo admin)' })
-    async getOrderById(@Param('id', ParseIntPipe) id: number): Promise<Order | null> {
-        return this.orderService.getOrderById(id);
+    @ApiOperation({ summary: 'Obtener mis órdenes' })
+    async getMyOrders(@CurrentUser() user: any): Promise<Order[]> {
+        console.log('GET /order/user requested by user:', user.sub);
+        return this.orderService.getOrdersByUser(user.sub);
+    }
+
+    @Get(':id')
+    @UseGuards(AuthGuard)
+    @ApiBearerAuth('JWT-auth')
+    @ApiOperation({ summary: 'Obtener orden por ID (admin o propietario)' })
+    async getOrderById(
+        @Param('id', ParseIntPipe) id: number,
+        @CurrentUser() user: any
+    ): Promise<Order | null> {
+        const order = await this.orderService.getOrderById(id);
+        
+        // Si no es admin, verificar que la orden le pertenece
+        if (user.role !== 'ADMIN' && order.user.id !== user.sub) {
+            throw new ForbiddenException('No tienes permiso para ver esta orden');
+        }
+        
+        return order;
     }
 
     @Post()

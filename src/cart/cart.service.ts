@@ -26,6 +26,16 @@ export class CartService {
         private orderLineRepository: Repository<OrderLine>,
     ) {}
 
+    /**
+     * Genera un slug único para una orden
+     * Formato: order-{timestamp}-{random}
+     */
+    private generateOrderSlug(): string {
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `order-${timestamp}-${random}`;
+    }
+
     // ==================== ADMIN: CRUD COMPLETO ====================
     getCarts(): Promise<Cart[]> {
         return this.cartRepository.find({
@@ -256,6 +266,7 @@ export class CartService {
         const newOrder = this.orderRepository.create({
             user,
             total,
+            slug: this.generateOrderSlug(),
             status: 'pending',
             createdAt: new Date(),
             updatedAt: new Date(),
